@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="model" nsURI="http://www.example.org/model" nsPrefix="model">
+  <eClassifiers xsi:type="ecore:EClass" name="Collection" abstract="true" interface="true"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Set" abstract="true" interface="true"
+      eSuperTypes="#//Collection"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Queue" abstract="true" interface="true"
+      eSuperTypes="#//Collection"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SortedSet" abstract="true" interface="true"
+      eSuperTypes="#//Set"/>
+  <eClassifiers xsi:type="ecore:EClass" name="NavigableSet" abstract="true" interface="true"
+      eSuperTypes="#//SortedSet">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="descendingSet" eType="#//NavigableSet"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="List" abstract="true" interface="true"
+      eSuperTypes="#//Collection"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Deque" abstract="true" interface="true"
+      eSuperTypes="#//Queue">
+    <eOperations name="getFirst" lowerBound="1" eType="#//E"/>
+    <eOperations name="getLast" lowerBound="1" eType="#//E"/>
+    <eOperations name="addFirst"/>
+    <eOperations name="addLast"/>
+    <eOperations name="removeFirst" lowerBound="1" eType="#//E"/>
+    <eOperations name="removeLast" lowerBound="1" eType="#//E"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Map" abstract="true" interface="true"/>
+  <eClassifiers xsi:type="ecore:EClass" name="LinkedHashSet" eSuperTypes="#//Set"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SortedMap" abstract="true" interface="true"
+      eSuperTypes="#//Map"/>
+  <eClassifiers xsi:type="ecore:EClass" name="NavigableMap" abstract="true" interface="true"
+      eSuperTypes="#//SortedMap">
+    <eOperations name="putFirst" lowerBound="1" eType="#//V"/>
+    <eOperations name="putLast" lowerBound="1" eType="#//V"/>
+    <eOperations name="firstEntry" lowerBound="1" eType="#//Entry"/>
+    <eOperations name="lastEntry" lowerBound="1" eType="#//Entry"/>
+    <eOperations name="pollFirstEntry" eType="#//Entry"/>
+    <eOperations name="pollLastEntry" eType="#//Entry"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="LinkedHashMap" eSuperTypes="#//Map"/>
+  <eClassifiers xsi:type="ecore:EClass" name="E"/>
+  <eClassifiers xsi:type="ecore:EClass" name="NoSuchElement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="K"/>
+  <eClassifiers xsi:type="ecore:EClass" name="V"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Entry"/>
+</ecore:EPackage>
