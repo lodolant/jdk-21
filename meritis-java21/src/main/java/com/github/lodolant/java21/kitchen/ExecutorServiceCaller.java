@@ -6,7 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class ExecutorServiceCaller {
-	static ExecutorService executorService = Executors.newFixedThreadPool(2);
+	static ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
 	public static <RESULT> Future<RESULT> submit(Callable<RESULT> callable) {
 		return executorService.submit(callable);
