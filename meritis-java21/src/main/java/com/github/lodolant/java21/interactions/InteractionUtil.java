@@ -15,32 +15,23 @@ public class InteractionUtil {
 
 	public static InteractionClient interactWithCustomer(Object interactionTarget) {
 		LOGGER.info("Interacting with customer: {}", interactionTarget);
-		if (interactionTarget == null) {
-			return new InteractionClientCheck();
-		} else if (interactionTarget instanceof Ingredient ingredient) {
-			if (ingredient.isFlagged()) {
-				return new InteractionClientCheckConsumption(ingredient);
-			}
-			return new InteractionClientTakeOrder(ingredient);
-		} else if (interactionTarget instanceof RecipeIngredient recipe) {
-			return new InteractionClientCheckCalories(recipe.quantity());
-		}
-		throw new ServiceException(HELP.formatted(interactionTarget.getClass().getSimpleName()));
+		return switch (interactionTarget) {
+		case null -> new InteractionClientCheck();
+		case Ingredient ingredient when ingredient.isFlagged() -> new InteractionClientCheckConsumption(ingredient);
+		case Ingredient ingredient -> new InteractionClientTakeOrder(ingredient);
+		case RecipeIngredient ingredient -> new InteractionClientCheckCalories(ingredient.quantity());
+		default -> throw new ServiceException(HELP.formatted(interactionTarget.getClass().getSimpleName()));
+		};
 	}
 
 	public static InteractionKitchen interactWithKitchen(InteractionClient interactionTarget) {
 		LOGGER.info("Interacting with kitchen: {}", interactionTarget);
-		if (interactionTarget == null) {
-			throw new NullPointerException();
-		}
-		if (interactionTarget instanceof InteractionClientTakeOrder takeOrder) {
-			return InteractionKitchen.GIVE_COMMAND;
-		} else if (interactionTarget instanceof InteractionClientCheckConsumption checkConsumtion) {
-			if (checkConsumtion.getIngredient().isFlagged()) {
-				return InteractionKitchen.CHECK_ALLERGENES;
-			}
-			return InteractionKitchen.COMMAND_MORE;
-		}
-		throw new ServiceException(HELP.formatted(interactionTarget.getClass().getSimpleName()));
+		return switch (interactionTarget) {
+		case InteractionClientTakeOrder takeOrder -> InteractionKitchen.GIVE_COMMAND;
+		case InteractionClientCheckConsumption checkConsumtion when checkConsumtion.getIngredient().isFlagged() -> InteractionKitchen.CHECK_ALLERGENES;
+		case InteractionClientCheckConsumption checkConsumtion -> InteractionKitchen.COMMAND_MORE;
+		case InteractionClientCheck checkClient -> throw new ServiceException(HELP.formatted(interactionTarget.getClass().getSimpleName()));
+		case InteractionClientCheckCalories checkClient -> throw new ServiceException(HELP.formatted(interactionTarget.getClass().getSimpleName()));
+		};
 	}
 }
