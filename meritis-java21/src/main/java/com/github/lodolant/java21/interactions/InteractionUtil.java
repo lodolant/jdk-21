@@ -19,7 +19,7 @@ public class InteractionUtil {
 		case null -> new InteractionClientCheck();
 		case Ingredient ingredient when ingredient.isFlagged() -> new InteractionClientCheckConsumption(ingredient);
 		case Ingredient ingredient -> new InteractionClientTakeOrder(ingredient);
-		case RecipeIngredient ingredient -> new InteractionClientCheckCalories(ingredient.quantity());
+		case RecipeIngredient(Ingredient ingredient, int quantity) -> new InteractionClientCheckCalories(quantity);
 		default -> throw new ServiceException(HELP.formatted(interactionTarget.getClass().getSimpleName()));
 		};
 	}
