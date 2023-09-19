@@ -15,8 +15,6 @@ For some incubator features such as jdk.incubator.concurrent, you will need to b
 ```
 --enable-preview 
 --add-modules jdk.incubator.concurrent 
---add-exports jdk.incubator.concurrent/jdk.incubator.concurrent=ALL-UNNAMED 
---add-exports java.base/jdk.internal.vm=ALL-UNNAMED 
 ```
 
 # IntelliJ
@@ -36,3 +34,6 @@ You will need to use flags to enable preview features/incubator features (See Us
 ```
 "Run/Debug configurations" / "Modify options" / "Add VM Options"
 ```
+
+# Eclipse
+Add --enable-preview to VM argument
