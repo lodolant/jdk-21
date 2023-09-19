@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope.ShutdownOnFailure;
+import java.util.concurrent.StructuredTaskScope.ShutdownOnSuccess;
 import java.util.concurrent.StructuredTaskScope.Subtask;
 
 import org.slf4j.Logger;
@@ -43,16 +45,47 @@ public class Kitchen {
 			LOGGER.info("Loading duration = {} ms", Duration.between(begin, end).toMillis());
 		}
 	}
+	
+	public static Map<Ingredient, Integer> commandMore()  {
+		try(ShutdownOnSuccess<List<RecipeIngredient>> scope = new ShutdownOnSuccess<>()) {
+			List<Subtask<List<RecipeIngredient>>> allCommands = new ArrayList<>();
+			allCommands.add(scope.fork(commandToButcher()));
+			allCommands.add(scope.fork(commandToLocalProducer1()));
+			allCommands.add(scope.fork(commandToLocalProducer2()));
+			allCommands.add(scope.fork(commandCheese()));
+			allCommands.add(scope.fork(getBakery()));
+
+			scope.join();
+			
+			List<RecipeIngredient> result = scope.result();
+			Map<Ingredient, Integer> ingredientToQuantity = new HashMap<>();
+			receiveCommand(result, ingredientToQuantity);
+			return ingredientToQuantity;
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	private static void receiveCommand(Subtask<List<RecipeIngredient>> ingredients,
 			Map<Ingredient, Integer> ingredientToQuantity) {
-		ingredients.get().forEach((recipeIngredient) -> {
+		receiveCommand(ingredients.get(), ingredientToQuantity);
+	}
+
+	private static void receiveCommand(List<RecipeIngredient> ingredients,
+			Map<Ingredient, Integer> ingredientToQuantity) {
+		ingredients.forEach((recipeIngredient) -> {
 			Ingredient ingredient = recipeIngredient.ingredient();
 			ingredientToQuantity.putIfAbsent(ingredient, Integer.valueOf(0));
 			int newQuantity = ingredientToQuantity.get(ingredient) + recipeIngredient.quantity();
 			ingredientToQuantity.put(ingredient, newQuantity);
 		});
 	}
+
 
 	private static Callable<List<RecipeIngredient>> commandToButcher() {
 		return () -> {
