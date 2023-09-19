@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.StructuredTaskScope.ShutdownOnFailure;
+import java.util.concurrent.StructuredTaskScope.Subtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +18,24 @@ public class Kitchen {
 
 	public static Map<Ingredient, Integer> commandIngredients() {
 		Instant begin = Instant.now();
-		List<Future<List<RecipeIngredient>>> allCommands = new ArrayList<>();
-		allCommands.add(ExecutorServiceCaller.submit(commandToButcher()));
-		allCommands.add(ExecutorServiceCaller.submit(commandToLocalProducer1()));
-		allCommands.add(ExecutorServiceCaller.submit(commandToLocalProducer2()));
-		allCommands.add(ExecutorServiceCaller.submit(commandCheese()));
-		allCommands.add(ExecutorServiceCaller.submit(getBakery()));
-		try {
+		try (ShutdownOnFailure scope = new ShutdownOnFailure()) {
+			List<Subtask<List<RecipeIngredient>>> allCommands = new ArrayList<>();
+			allCommands.add(scope.fork(commandToButcher()));
+			allCommands.add(scope.fork(commandToLocalProducer1()));
+			allCommands.add(scope.fork(commandToLocalProducer2()));
+			allCommands.add(scope.fork(commandCheese()));
+			allCommands.add(scope.fork(getBakery()));
+
+			scope.join();
+			scope.throwIfFailed((Throwable t) -> {
+				LOGGER.info("Error encountered : {}", t.getLocalizedMessage());
+				throw new ServiceException("Could not receive commands");
+			});
+
 			Map<Ingredient, Integer> ingredientToQuantity = new HashMap<>();
 			allCommands.forEach(oneCommand -> receiveCommand(oneCommand, ingredientToQuantity));
 			return ingredientToQuantity;
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
 			LOGGER.info("Error encountered : {}", e.getLocalizedMessage());
 			throw new ServiceException("Could not receive commands");
 		} finally {
@@ -37,18 +44,14 @@ public class Kitchen {
 		}
 	}
 
-	private static void receiveCommand(Future<List<RecipeIngredient>> ingredients,
+	private static void receiveCommand(Subtask<List<RecipeIngredient>> ingredients,
 			Map<Ingredient, Integer> ingredientToQuantity) {
-		try {
-			ingredients.get().forEach((recipeIngredient) -> {
-				Ingredient ingredient = recipeIngredient.ingredient();
-				ingredientToQuantity.putIfAbsent(ingredient, Integer.valueOf(0));
-				int newQuantity = ingredientToQuantity.get(ingredient) + recipeIngredient.quantity();
-				ingredientToQuantity.put(ingredient, newQuantity);
-			});
-		} catch (InterruptedException | ExecutionException e) {
-			throw new ServiceException("Could not receive command...");
-		}
+		ingredients.get().forEach((recipeIngredient) -> {
+			Ingredient ingredient = recipeIngredient.ingredient();
+			ingredientToQuantity.putIfAbsent(ingredient, Integer.valueOf(0));
+			int newQuantity = ingredientToQuantity.get(ingredient) + recipeIngredient.quantity();
+			ingredientToQuantity.put(ingredient, newQuantity);
+		});
 	}
 
 	private static Callable<List<RecipeIngredient>> commandToButcher() {
